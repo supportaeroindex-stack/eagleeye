@@ -1,0 +1,11 @@
+node_modules
+*.db
+*.db-wal
+*.db-shm
+*.log
+agent-windows
+android-source
+netlify-site
+public/downloads
+__pycache__
+*.zip

@@ -1,0 +1,17 @@
+# Render Blueprint — deploys the EagleEye backend (which also serves the dashboard).
+# In Render: New -> Blueprint, point it at your repo. One free web service appears.
+services:
+  - type: web
+    name: eagleeye-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # The free plan has an EPHEMERAL disk — accounts reset when the service restarts.
+      # For permanent data, upgrade and add a Disk mounted at /data, then uncomment:
+      # - key: DB_PATH
+      #   value: /data/eagleeye.db

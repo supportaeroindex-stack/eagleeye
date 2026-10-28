@@ -1,0 +1,12 @@
+{
+  "name": "eagleeye-backend",
+  "version": "1.0.0",
+  "description": "EagleEye parental-control backend — real HTTP server + SQLite database, zero dependencies.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

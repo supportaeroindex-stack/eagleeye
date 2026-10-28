@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EagleEye — Parent Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --bg:#0b1016; --surface:#121b26; --surface-2:#19242f; --ink:#eef2f6; --ink-soft:#a7b4c2;
+    --ink-faint:#6c7a8a; --line:#22303c; --accent:#e8a33d; --accent-ink:#f0bd6e; --brand:#0b1016;
+    --good:#35b57e; --warn:#e0a23e; --crit:#e4675b;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35); --radius:14px;
+    --fd:"Outfit","Trebuchet MS",sans-serif; --fb:"IBM Plex Sans",system-ui,sans-serif; --fm:"IBM Plex Mono",ui-monospace,monospace;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--fb);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:var(--fd);letter-spacing:-.01em;text-wrap:balance}
+  .mono{font-family:var(--fm);font-variant-numeric:tabular-nums}
+  .tnum{font-variant-numeric:tabular-nums}
+  .wrap{width:100%;max-width:1120px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+  header.nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .nav-row{display:flex;align-items:center;gap:14px;padding-block:12px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;font-size:18px;letter-spacing:-.02em}
+  .brand .logo{width:30px;height:30px}
+  .nav-right{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--ink-soft)}
+  .btn{font:inherit;font-weight:600;font-size:14px;cursor:pointer;border-radius:10px;padding:10px 16px;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;justify-content:center;transition:transform .06s,filter .15s}
+  .btn:active{transform:translateY(1px)} .btn:disabled{opacity:.5;cursor:default}
+  .btn-primary{background:var(--accent);color:#1a1205;border-color:var(--accent)} .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:var(--surface);color:var(--ink);border-color:var(--line)} .btn-ghost:hover{background:var(--surface-2)}
+  .btn-sm{padding:7px 12px;font-size:13px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--ink-soft)}
+  .field input,.field select{width:100%;font:inherit;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .field input:focus-visible,.field select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .err{color:var(--crit);font-size:13px;margin:6px 0;min-height:0}
+  .muted{color:var(--ink-faint)} .soft{color:var(--ink-soft)}
+
+  /* auth */
+  .auth-wrap{min-height:calc(100% - 60px);display:grid;place-items:center;padding-block:40px}
+  .auth-card{width:100%;max-width:420px}
+  .tabs{display:flex;gap:4px;background:var(--surface-2);padding:4px;border-radius:12px;margin-bottom:20px}
+  .tabs button{flex:1;font:inherit;font-weight:600;font-size:14px;padding:9px;border:0;border-radius:9px;background:none;color:var(--ink-soft);cursor:pointer}
+  .tabs button.active{background:var(--surface);color:var(--ink)}
+
+  /* dashboard */
+  .dash-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:22px 6px}
+  .dash-head h2{margin:0;font-size:24px}
+  .devices-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:16px}
+  .dev-card{cursor:pointer;border:1px solid var(--line);transition:border-color .15s}
+  .dev-card:hover{border-color:var(--accent)}
+  .dev-card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .dev-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .avatar{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;flex:none;font-family:var(--fd)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+  .pill .dot{width:8px;height:8px;border-radius:50%}
+  .pill.good{color:var(--good);border-color:color-mix(in srgb,var(--good) 30%,transparent)}
+  .pill.crit{color:var(--crit);border-color:color-mix(in srgb,var(--crit) 30%,transparent)}
+  .pill.locked{color:var(--ink);background:var(--surface-2)}
+  .pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
+  .detail-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-top:16px;align-items:start}
+  .cardtitle{margin:0 0 2px;font-size:15px} .cardsub{color:var(--ink-faint);font-size:12.5px;margin:0 0 16px}
+  .controls-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ctrl-btn{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);cursor:pointer;font:inherit;color:inherit}
+  .ctrl-btn:hover{background:var(--surface-2)} .ctrl-btn b{font-family:var(--fd);font-size:14px} .ctrl-btn span{font-size:12px;color:var(--ink-faint)}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .bar{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:12px}
+  .bar i{display:block;height:100%;background:var(--accent)}
+  .feed-item{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .feed-item:first-child{border-top:0}
+  .feed-item .ft{font-family:var(--fm);font-size:11px;color:var(--ink-faint);flex:none;width:84px;padding-top:1px}
+  .feed-item .fb b{font-weight:600} .feed-item .fb span{color:var(--ink-faint)}
+  .empty{text-align:center;color:var(--ink-faint);padding:26px 10px;font-size:13.5px}
+  .token-box{font-family:var(--fm);font-size:12.5px;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:12px;word-break:break-all;color:var(--accent-ink)}
+  .note{background:color-mix(in srgb,var(--accent) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);border-radius:12px;padding:13px 15px;font-size:13px;color:var(--ink-soft);display:flex;gap:10px;margin-top:16px}
+  .note b{color:var(--ink)}
+  .toast-wrap{position:fixed;left:0;right:0;bottom:calc(18px+env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:8px;z-index:60;pointer-events:none;padding-inline:16px}
+  .toast{background:#1b2735;color:#f3f6f9;padding:12px 16px;border-radius:12px;font-size:13.5px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.1);max-width:440px}
+  dialog{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:16px;padding:24px;max-width:420px;width:92%;box-shadow:var(--shadow)}
+  dialog::backdrop{background:rgba(0,0,0,.55)}
+  @media(max-width:720px){.detail-grid{grid-template-columns:1fr}.controls-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-row">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="15" fill="var(--brand)" stroke="var(--accent)" stroke-width="1.5"/>
+        <ellipse cx="16" cy="16" rx="12" ry="7.5" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+        <circle cx="16" cy="16" r="4.4" fill="var(--accent)"/><circle cx="16" cy="16" r="1.7" fill="var(--brand)"/>
+      </svg>EagleEye
+    </div>
+    <div class="nav-right" id="navRight"></div>
+  </div>
+</header>
+
+<main id="app" class="wrap"></main>
+<div class="toast-wrap" id="toasts" aria-live="polite"></div>
+
+<dialog id="addDlg">
+  <h3 style="margin:0 0 4px">Add a device</h3>
+  <p class="cardsub">Register a child's device. You'll get a pairing token to connect the companion agent.</p>
+  <div class="field"><label for="dName">Name (child or device)</label><input id="dName" placeholder="e.g. Mia's iPad"></div>
+  <div class="field"><label for="dPlat">Platform</label>
+    <select id="dPlat"><option>Windows</option><option>Android</option><option>macOS</option><option>iOS / iPadOS</option></select></div>
+  <div class="err" id="addErr"></div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+    <button class="btn btn-ghost btn-sm" id="addCancel">Cancel</button>
+    <button class="btn btn-primary btn-sm" id="addSave">Add device</button>
+  </div>
+</dialog>
+
+<script>
+let API = location.origin;
+try { const savedApi = localStorage.getItem("ee_api"); if (savedApi) API = savedApi; } catch {}
+let TOKEN = null, PARENT = null, DEVICES = [], SEL = null, poll = null;
+try { TOKEN = localStorage.getItem("ee_token"); } catch {}
+
+const $ = (s, r=document) => r.querySelector(s);
+const app = $("#app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = m => { m=Math.round(m); const h=Math.floor(m/60),mm=m%60; return (h?h+"h ":"")+mm+"m"; };
+const COLORS = ["#e8a33d","#2f7fd1","#35b57e","#b46fd0","#e4675b"];
+const colorFor = i => COLORS[i % COLORS.length];
+
+function toast(msg){ const w=$("#toasts"); const t=document.createElement("div"); t.className="toast"; t.textContent=msg; w.appendChild(t);
+  setTimeout(()=>{t.style.transition="opacity .3s";t.style.opacity="0";setTimeout(()=>t.remove(),320);},2400); }
+
+async function api(path, opts={}){
+  const headers = Object.assign({"Content-Type":"application/json"}, opts.headers||{});
+  if (TOKEN) headers.Authorization = "Bearer "+TOKEN;
+  const res = await fetch(API+path, Object.assign({}, opts, { headers, body: opts.body?JSON.stringify(opts.body):undefined }));
+  let data = {}; try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error(data.error || ("Request failed ("+res.status+")"));
+  return data;
+}
+
+function setToken(t, parent){ TOKEN=t; PARENT=parent; try{t?localStorage.setItem("ee_token",t):localStorage.removeItem("ee_token");}catch{} }
+
+function renderNav(){
+  const n = $("#navRight");
+  if (PARENT){ n.innerHTML = `<span class="soft">${esc(PARENT.name)} · ${esc(PARENT.email)}</span><button class="btn btn-ghost btn-sm" id="logout">Sign out</button>`;
+    $("#logout").onclick = logout;
+  } else n.innerHTML = `<span class="muted mono">localhost · real database</span>`;
+}
+
+/* ---------------- auth screen ---------------- */
+function renderAuth(mode="login"){
+  stopPoll();
+  app.innerHTML = `
+  <div class="auth-wrap"><div class="auth-card">
+    <h2 style="font-size:26px;margin:0 0 6px">Parent console</h2>
+    <p class="soft" style="margin:0 0 20px">Real account, stored in a real database on this machine. Children never see this screen.</p>
+    <div class="tabs"><button data-m="login" class="${mode==='login'?'active':''}">Sign in</button>
+      <button data-m="register" class="${mode==='register'?'active':''}">Create account</button></div>
+    <form id="authForm">
+      <div class="field"><label for="apiUrl">Backend URL</label><input id="apiUrl" type="url" value="${esc(API)}" placeholder="https://your-backend.example.com"></div>
+      ${mode==='register'?`<div class="field"><label for="name">Your name</label><input id="name" autocomplete="name" placeholder="Alex Parent"></div>`:''}
+      <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="username" placeholder="you@example.com"></div>
+      <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="${mode==='register'?'new-password':'current-password'}" placeholder="${mode==='register'?'At least 6 characters':'••••••••'}"></div>
+      <div class="err" id="authErr"></div>
+      <button class="btn btn-primary" style="width:100%" type="submit">${mode==='register'?'Create account':'Sign in'}</button>
+    </form>
+    <div class="note"><span style="color:var(--accent)">●</span><div>Passwords are hashed with <b>scrypt</b> before storage. Nothing leaves this computer — the server is <span class="mono">${esc(location.origin)}</span>.</div></div>
+  </div></div>`;
+  app.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>renderAuth(b.dataset.m));
+  $("#authForm").onsubmit = async e => {
+    e.preventDefault();
+    const err=$("#authErr"); err.textContent="";
+    const apiVal = $("#apiUrl").value.trim();
+    if (apiVal) { API = apiVal.replace(/\/+$/,""); try { localStorage.setItem("ee_api", API); } catch {} }
+    const email=$("#email").value.trim(), pw=$("#pw").value;
+    const name = mode==='register' ? $("#name").value.trim() : undefined;
+    try {
+      const data = await api("/api/"+(mode==='register'?'register':'login'), { method:"POST", body:{email,password:pw,name} });
+      setToken(data.token, data.parent); renderNav(); toast("Welcome, "+data.parent.name); loadDashboard();
+    } catch(ex){ err.textContent = ex.message; }
+  };
+}
+
+/* ---------------- dashboard ---------------- */
+async function loadDashboard(){
+  try { const me = await api("/api/me"); PARENT = me.parent; }
+  catch { setToken(null,null); renderNav(); return renderAuth("login"); }
+  renderNav();
+  await refreshDevices(true);
+  startPoll();
+}
+
+async function refreshDevices(reselect){
+  const { devices } = await api("/api/devices");
+  DEVICES = devices;
+  if (reselect || !DEVICES.find(d=>d.id===SEL)) SEL = DEVICES[0]?.id || null;
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const sel = DEVICES.find(d=>d.id===SEL) || null;
+  app.innerHTML = `
+    <div class="dash-head"><h2>Your family</h2>
+      <button class="btn btn-primary btn-sm" id="addBtn" style="margin-left:auto">+ Add device</button></div>
+    ${DEVICES.length===0 ? `<div class="card empty" style="margin-top:14px">No devices yet. Click <b>Add device</b> to register your first one and get its pairing token.</div>` : `
+    <div class="devices-row" id="devRow">${DEVICES.map((d,i)=>devCard(d,i)).join("")}</div>`}
+    <div id="detail"></div>`;
+  $("#addBtn").onclick = openAdd;
+  app.querySelectorAll("[data-dev]").forEach(c=>c.onclick=()=>{ SEL=c.dataset.dev; renderDashboard(); });
+  if (sel) renderDetail(sel);
+}
+
+function statusPill(d){
+  if (d.locked) return `<span class="pill locked">🔒 Locked</span>`;
+  return d.online ? `<span class="pill good"><span class="dot" style="background:var(--good)"></span>Online</span>`
+                  : `<span class="pill crit"><span class="dot" style="background:var(--crit)"></span>Offline</span>`;
+}
+function devCard(d,i){
+  const pct = d.limitMin>0 ? Math.min(100,Math.round(d.usedMin/d.limitMin*100)) : 0;
+  return `<div class="card dev-card ${d.id===SEL?'sel':''}" data-dev="${d.id}">
+    <div class="dev-top"><div class="avatar" style="background:${colorFor(i)}">${esc(d.name[0]||"?")}</div>
+      <div style="min-width:0"><div style="font-family:var(--fd);font-weight:600">${esc(d.name)}</div>
+      <div class="muted" style="font-size:12.5px">${esc(d.platform)}</div></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${statusPill(d)}
+      ${d.limitMin>0?`<span class="pill ${pct>=100?'crit':pct>=90?'warn':''}">${fmt(d.usedMin)} / ${fmt(d.limitMin)}</span>`:''}</div>
+    <div class="bar"><i style="width:${pct}%"></i></div></div>`;
+}
+
+async function renderDetail(d){
+  const i = DEVICES.findIndex(x=>x.id===d.id);
+  const pct = d.limitMin>0 ? Math.min(100,Math.round(d.usedMin/d.limitMin*100)) : 0;
+  const neverSeen = !d.lastSeen;
+  $("#detail").innerHTML = `
+  <div class="detail-grid">
+    <div style="display:grid;gap:16px">
+      <div class="card">
+        <h3 class="cardtitle">Live status — ${esc(d.name)}</h3>
+        <p class="cardsub">${neverSeen ? "No agent has checked in yet" : "Last check-in "+ago(d.lastSeen)}</p>
+        <div style="margin:8px 0 14px;padding:14px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line)">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)">
+            <span style="width:8px;height:8px;border-radius:50%;background:${d.online?'var(--good)':'var(--crit)'};display:inline-block"></span>On screen right now</div>
+          <div style="font-family:var(--fd);font-size:21px;font-weight:600;margin-top:6px;word-break:break-word">${esc(d.currentApp||"—")}</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">${statusPill(d)}
+          ${d.place?`<span class="pill">📍 ${esc(d.place)}</span>`:''}</div>
+      </div>
+      <div class="card">
+        <h3 class="cardtitle">Controls</h3><p class="cardsub">Queued to the device; applied on its next check-in</p>
+        <div class="controls-row">
+          <button class="ctrl-btn" data-cmd="${d.locked?'unlock':'lock'}"><b>${d.locked?'Unlock device':'Lock device now'}</b><span>${d.locked?'Restore access':'Freeze the screen'}</span></button>
+          <button class="ctrl-btn" data-cmd="shutdown"><b>Shut down</b><span>Power the device off</span></button>
+          <button class="ctrl-btn" data-cmd="pause"><b>Pause 30 min</b><span>Temporary time-out</span></button>
+          <button class="ctrl-btn" data-cmd="bedtime"><b>Start bedtime</b><span>Lock until morning</span></button>
+        </div>
+        <div style="margin-top:18px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">
+            <span class="soft" style="font-size:13px">Daily screen-time limit</span><b class="tnum" id="limLab" style="font-family:var(--fd);font-size:22px">${fmt(d.limitMin)}</b></div>
+          <input type="range" id="limRange" min="0" max="300" step="15" value="${d.limitMin}">
+          <div class="bar"><i id="usedBar" style="width:${pct}%"></i></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-faint);margin-top:6px"><span>${fmt(d.usedMin)} used</span><span>${pct}%</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="cardtitle">Pairing token</h3><p class="cardsub">The companion agent uses this to connect this device</p>
+        <div class="token-box">${esc(d.pairingToken)}</div>
+        <button class="btn btn-ghost btn-sm" id="copyTok" style="margin-top:10px">Copy token</button>
+        <button class="btn btn-ghost btn-sm" id="delDev" style="margin-top:10px;color:var(--crit)">Remove device</button>
+      </div>
+      <div class="card">
+        <h3 class="cardtitle">Install the app on this device</h3>
+        <p class="cardsub">Download, run it, and pair with the token above</p>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <a class="btn btn-primary" style="text-decoration:none" href="/downloads/EagleEye-Windows.zip" download>⬇ Windows agent — installer (.zip)</a>
+          <a class="btn btn-ghost" style="text-decoration:none" href="/downloads/EagleEye-Android-source.zip" download>⬇ Android app — source for Android Studio (.zip)</a>
+          <div class="muted" style="font-size:12.5px;line-height:1.5">
+            <b style="color:var(--ink-soft)">Windows:</b> unzip, run <span class="mono">install.bat</span>, paste this token — it runs now and at every login.<br>
+            <b style="color:var(--ink-soft)">Android:</b> open the folder in Android Studio, <span class="mono">Build → Build APK</span>, install the APK, pair with this token.<br>
+            <b style="color:var(--ink-soft)">macOS / iOS:</b> build from source with your Apple Developer account — Apple's sandbox blocks covert live-screen and remote power-off.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;gap:16px">
+      <div class="card">
+        <h3 class="cardtitle">Activity</h3><p class="cardsub">Real events reported by this device</p>
+        <div id="feed"><div class="empty">Loading…</div></div>
+      </div>
+      <div class="card">
+        <h3 class="cardtitle">Browsing history</h3><p class="cardsub">Private/incognito mode is disabled on paired devices, so all browsing shows here</p>
+        <div id="hist"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+  </div>`;
+
+  $("#detail").querySelectorAll("[data-cmd]").forEach(b=>b.onclick=()=>sendCmd(d.id,b.dataset.cmd));
+  const range=$("#limRange");
+  range.oninput=()=>{ $("#limLab").textContent=fmt(+range.value);
+    $("#usedBar").style.width=(+range.value>0?Math.min(100,Math.round(d.usedMin/+range.value*100)):0)+"%"; };
+  range.onchange=async()=>{ try{ await api("/api/devices/"+d.id,{method:"PATCH",body:{limitMin:+range.value}});
+    toast("Limit set to "+fmt(+range.value)+" for "+d.name); await refreshDevices(false);}catch(e){toast(e.message);} };
+  $("#copyTok").onclick=async()=>{ try{ await navigator.clipboard.writeText(d.pairingToken); toast("Token copied"); }
+    catch{ toast("Copy failed — select it manually"); } };
+  $("#delDev").onclick=async()=>{ if(!confirmInline()) {} try{ await api("/api/devices/"+d.id,{method:"DELETE"}); toast("Device removed"); await refreshDevices(true);}catch(e){toast(e.message);} };
+
+  loadFeed(d.id);
+  loadHistory(d.id);
+}
+function confirmInline(){ return true; }
+
+async function loadFeed(id){
+  try {
+    const { events } = await api("/api/devices/"+id+"/events");
+    const feed = $("#feed"); if(!feed) return;
+    if (!events.length){ feed.innerHTML = `<div class="empty">No activity yet.<br>Events appear here the moment a paired agent reports in.</div>`; return; }
+    feed.innerHTML = events.map(e=>`<div class="feed-item"><div class="ft">${new Date(e.ts).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="fb"><b>${esc(e.title)}</b><br><span>${esc(e.detail)}</span></div></div>`).join("");
+  } catch(e){ const f=$("#feed"); if(f) f.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+
+function hostOf(u){ try { return new URL(u).hostname.replace(/^www\./,""); } catch { return ""; } }
+async function loadHistory(id){
+  try {
+    const { history } = await api("/api/devices/"+id+"/history");
+    const box = $("#hist"); if(!box) return;
+    if (!history.length){ box.innerHTML = `<div class="empty">No browsing logged yet.<br>Visited pages appear here within a minute of the agent checking in.</div>`; return; }
+    box.innerHTML = history.map(v=>`<div class="feed-item"><div class="ft">${new Date(v.ts).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="fb"><b>${esc(v.title||hostOf(v.url))}</b><br><span>${esc(hostOf(v.url))} · ${esc(v.browser||"")}</span></div></div>`).join("");
+  } catch(e){ const b=$("#hist"); if(b) b.innerHTML=`<div class="empty">${esc(e.message)}</div>`; }
+}
+
+async function sendCmd(id,type){
+  try { await api("/api/devices/"+id+"/command",{method:"POST",body:{type}});
+    const label={lock:"Lock",unlock:"Unlock",shutdown:"Shut-down",pause:"Pause",bedtime:"Bedtime"}[type];
+    toast(label+" sent"); await refreshDevices(false);
+  } catch(e){ toast(e.message); }
+}
+function ago(ts){ const s=Math.round((Date.now()-ts)/1000); if(s<60)return s+"s ago"; const m=Math.round(s/60); if(m<60)return m+"m ago"; return Math.round(m/60)+"h ago"; }
+
+/* add device dialog */
+function openAdd(){ const dlg=$("#addDlg"); $("#dName").value=""; $("#addErr").textContent=""; dlg.showModal();
+  $("#addCancel").onclick=()=>dlg.close();
+  $("#addSave").onclick=async()=>{ const name=$("#dName").value.trim(), platform=$("#dPlat").value;
+    if(!name){ $("#addErr").textContent="Give the device a name."; return; }
+    try{ await api("/api/devices",{method:"POST",body:{name,platform}}); dlg.close(); toast("Device added"); await refreshDevices(true); }
+    catch(e){ $("#addErr").textContent=e.message; } };
+}
+
+/* polling to reflect real agent updates */
+function startPoll(){ stopPoll(); poll=setInterval(async()=>{ try{ const {devices}=await api("/api/devices");
+  DEVICES=devices; const sel=DEVICES.find(d=>d.id===SEL); // light refresh of cards + feed
+  const row=$("#devRow"); if(row) DEVICES.forEach((d,i)=>{}); renderDashboardSoft(); }catch{} }, 5000); }
+function stopPoll(){ if(poll) clearInterval(poll); poll=null; }
+function renderDashboardSoft(){ // re-render cards + detail status without losing dialog
+  if(!PARENT) return; renderDashboard();
+}
+
+async function logout(){ try{ await api("/api/logout",{method:"POST"}); }catch{} setToken(null,null); renderNav(); stopPoll(); renderAuth("login"); toast("Signed out"); }
+
+/* boot */
+renderNav();
+if (TOKEN) loadDashboard(); else renderAuth("login");
+</script>
+</body>
+</html>

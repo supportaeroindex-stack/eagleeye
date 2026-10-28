@@ -1,0 +1,11 @@
+node_modules/
+*.db
+*.db-wal
+*.db-shm
+*.log
+server.err.log
+__pycache__/
+public/downloads/
+*.zip
+eagleeye_config.json
+eagleeye_state.json
